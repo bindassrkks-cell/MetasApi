@@ -1,10 +1,9 @@
 import os
 import io
 import zipfile
-import tarfile
 import requests
 from fastapi import FastAPI, UploadFile, File, HTTPException, Query
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import List, Dict
 
@@ -40,20 +39,16 @@ async def unpack_archive_matrix(
     file: UploadFile = File(...)
 ):
     """
-    Maps Option [1] of your interface. Unbundles uploaded archives, generates 
-    structural maps, and formats contents into JSON vectors so the App can save them locally.
+    Unbundles uploaded archives, generates structural maps, and formats contents into JSON vectors.
     """
     if not file.filename:
         raise HTTPException(status_code=400, detail="Invalid node reference target.")
 
     try:
-        # Load stream directly into volatile virtual memory cache blocks
         contents = await file.read()
         archive_stream = io.BytesIO(contents)
-        
         discovered_files_metadata: List[Dict] = []
         
-        # Check integrity and extract based on layout standard rules
         if zipfile.is_zipfile(archive_stream):
             archive_stream.seek(0)
             with zipfile.ZipFile(archive_stream, 'r') as zip_ref:
@@ -61,14 +56,12 @@ async def unpack_archive_matrix(
                     if member.is_dir():
                         continue
                     
-                    # Compute file structure extraction rules based on selection mode
                     filename_output = member.filename if unpack_mode == 1 else os.path.basename(member.filename)
                     if not filename_output:
                         continue
                         
                     raw_data = zip_ref.read(member.filename)
                     
-                    # Metadata node creation to pipe back to Android workspace
                     discovered_files_metadata.append({
                         "file_path": filename_output,
                         "size_bytes": len(raw_data),
@@ -88,7 +81,7 @@ async def unpack_archive_matrix(
             }
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal pipeline isolation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal pipeline data error: {str(e)}")
 
 @app.post("/api/v4/patch/search")
 async def search_text_string_pattern(
@@ -96,7 +89,7 @@ async def search_text_string_pattern(
     file: UploadFile = File(...)
 ):
     """
-    Maps Option [4] of the controller workspace interface. Traverses internal lines asynchronously.
+    Traverses internal archive filenames asynchronously.
     """
     try:
         contents = await file.read()
@@ -121,7 +114,7 @@ async def search_text_string_pattern(
 @app.post("/api/v4/patch/repack")
 async def repack_nodes_into_archive(payload: RepackPayload):
     """
-    Maps Option [2] of the configuration screen. Rebundles file pieces back into a structural container.
+    Rebundles file pieces back into a structural container.
     """
     if TG_BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
         raise HTTPException(status_code=500, detail="Cloud variables infrastructure map unconfigured.")
@@ -131,7 +124,6 @@ async def repack_nodes_into_archive(payload: RepackPayload):
         
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for fid in payload.telegram_file_ids:
-                # Resolve location node mapping coordinates out of Telegram endpoint
                 path_res = requests.post(f"{TG_API_BASE}/getFile", data={"file_id": fid}, timeout=20)
                 if path_res.ok and path_res.json().get("ok"):
                     file_path = path_res.json()["result"]["file_path"]
@@ -140,12 +132,10 @@ async def repack_nodes_into_archive(payload: RepackPayload):
                     file_bytes = requests.get(download_url, timeout=60).content
                     pure_name = file_path.split("/")[-1]
                     
-                    # Package content matrix bundle back together safely
                     zip_file.writestr(pure_name, file_bytes)
 
         zip_buffer.seek(0)
         
-        # Stream compilation straight out to storage backend
         upload_url = f"{TG_API_BASE}/sendDocument"
         files = {'document': (payload.output_archive_name, zip_buffer.getvalue(), 'application/zip')}
         data = {'chat_id': TG_CHAT_ID, 'caption': "Repacked package structure module deployment."}
